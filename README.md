@@ -1,4 +1,12 @@
-# Vue 3 + Vite
+# Vue 3 + Vite + Element Plus
+npm init vite@latest funnyutils-web -- --template vue
+cd funnyutils-web
+npm install
+npm install axios
+npm install element-plus @element-plus/icons-vue
+
+
+
 
 This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
 
