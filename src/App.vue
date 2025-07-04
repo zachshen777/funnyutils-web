@@ -2,7 +2,7 @@
   <div id="app">
     <!-- 导航栏 -->
     <header class="navbar">
-      <h1 class="site-title">图片转换工具</h1>
+      <h1 class="site-title">图片转换字符画-Image To Ascii Art</h1>
     </header>
     <!-- 侧边栏 -->
     <aside class="sidebar">
@@ -34,14 +34,30 @@
             <label>宽度: <input type="number" v-model="width" min="10" max="500" /></label>
             <label>高度: <input type="number" v-model="height" min="10" max="300" /></label>
           </div>
+          <!-- 添加拖拉条控件 -->
+          <div class="scale-section">
+            <label>输出比例: [ {{ scale }} ]</label>
+            <el-slider v-model="scale" :min="0" :max="5" step="0.1"></el-slider>
+          </div>
           <div class="button-section">
             <el-button type="primary" @click="convertImage">确认转换</el-button>
           </div>
+          <!-- 样式切换开关 -->
+          <div class="style-toggle">
+            <el-switch
+              v-model="useStyle1"
+              active-text="样式 1"
+              inactive-text="样式 2"
+            ></el-switch>
+          </div>
         </div>
         <!-- 右侧结果展示区 -->
-        <div class="result-area">
+        <div :class="[useStyle1 ? 'result-area1' : 'result-area2']">
           <pre v-if="asciiResult">{{ asciiResult }}</pre>
         </div>
+        <div class="result-title-container">
+            <h3 class="result-title-vertical">效果展示区</h3>
+          </div>
       </div>
     </main>
     <!-- 页脚 -->
@@ -67,8 +83,10 @@ const activeTab = ref('1');
 const selectedFile = ref(null);
 const asciiResult = ref('');
 const previewUrl = ref('');
-const width = ref(80);  // 默认宽度
-const height = ref(40); // 默认高度
+const width = ref(0);  // 默认宽度为空
+const height = ref(0); // 默认高度为空
+const scale = ref(1);   // 默认比例值为 1
+const useStyle1 = ref(true); // 默认使用样式1
 
 const handleSelect = (key) => {
   activeTab.value = key;
@@ -90,10 +108,17 @@ const convertImage = async () => {
     return;
   }
   const formData = new FormData();
+  // 初始化 imageParam 对象
+  const imageParam = {
+    width: width.value,
+    height: height.value,
+    scale: scale.value
+  };
+
+  // 将 imageParam 对象转换为 JSON 字符串
+  const imageParamJson = JSON.stringify(imageParam);
   formData.append('image', selectedFile.value);
-  // 添加宽度和高度参数
-  formData.append('width', width.value);
-  formData.append('height', height.value);
+  formData.append('imageParam', imageParamJson);
   try {
     const response = await axios.post('/api/image-to-ascii', formData, {
       headers: {
@@ -169,12 +194,32 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.result-area {
+.result-title {
+  color: rgb(0, 183, 255);  /* 颜色 */
+  text-align: center;     /* 居中显示 */
+  margin: 1px 0 1px 0; 
+  padding-bottom: 10px;   /* 底部内边距 */
+  border-bottom: 1px solid #eee; /* 底部边框 */
+}
+
+.result-area1 {
   flex: 1;
   background-color: white;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.result-area2 {
+  flex: 1;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-family: monospace;
+  line-height: 1; /* 减少行高 */
+  white-space: pre;
+  letter-spacing: 0.2em; /* 增加字符间距 */
 }
 
 .drag-upload {
@@ -241,5 +286,37 @@ body {
 
 .footer a:hover {
   text-decoration: underline;
+}
+
+/* 新增比例输入区域样式 */
+.scale-section {
+  margin-top: 10px;
+}
+/* 展示区样式 */
+.pre-ascii-art {
+    font-family: monospace;
+    line-height: 1; /* 减少行高 */
+    white-space: pre;
+    letter-spacing: 0.5em; /* 增加字符间距 */
+}
+
+.result-display-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+}
+
+.result-title-container {
+  width: 30px;
+  background-color: #f9f9f9;
+  border-radius: 0 8px 8px 0;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.result-title-vertical {
+  writing-mode: vertical-rl;
+  margin: 100px 0; 
+  padding: 10px 0;
+  color: #646cff;  /* 颜色 */
 }
 </style>
