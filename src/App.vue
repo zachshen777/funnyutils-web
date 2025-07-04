@@ -30,40 +30,52 @@
             <!-- 图片预览区域 -->
             <img v-if="previewUrl" :src="previewUrl" alt="Preview" class="preview-image" />
           </div>
-          <div class="dimensions">
-            <label>宽度: <input type="number" v-model="width" min="10" max="500" /></label>
-            <label>高度: <input type="number" v-model="height" min="10" max="300" /></label>
-          </div>
           <!-- 添加拖拉条控件 -->
           <div class="scale-section">
-            <label>输出比例: [ {{ scale }} ]</label>
-            <el-slider v-model="scale" :min="0" :max="5" step="0.1"></el-slider>
+            <div class="scale-labels">
+              <span>{{ scaleMin }}</span>
+              <label>输出比例[ {{ scale }} ]</label>
+              <span>{{ scaleMax }}</span>
+            </div>
+            <el-slider v-model="scale" :min="scaleMin" :max="scaleMax" step="0.1"></el-slider>
+          </div>
+          <!-- 添加下拉选择框和输入框 -->
+          <div class="select-section">
+            <el-select v-model="selectedCharType" placeholder="请选择字符类型">
+              <el-option label="字符类型1" value="type1"></el-option>
+              <el-option label="字符类型2" value="type2"></el-option>
+              <el-option label="自定义类型" value="custom"></el-option>
+            </el-select>
+            <el-input v-model="charInput" 
+            :disabled="selectedCharType!== 'custom'"
+            :placeholder="selectedCharType === 'custom' ? '请输入字符' : ''"/>
+          </div>
+          <!-- 样式切换开关 -->
+          <div class="style-toggle">
+            <el-switch class="comm-margin"
+              v-model="useStyle1"
+              active-text="不拉伸"
+              inactive-text="拉伸"
+            ></el-switch>
           </div>
           <div class="button-section">
             <el-button type="primary" @click="convertImage">确认转换</el-button>
           </div>
-          <!-- 样式切换开关 -->
-          <div class="style-toggle">
-            <el-switch
-              v-model="useStyle1"
-              active-text="样式 1"
-              inactive-text="样式 2"
-            ></el-switch>
-          </div>
+          
         </div>
         <!-- 右侧结果展示区 -->
         <div :class="[useStyle1 ? 'result-area1' : 'result-area2']">
           <pre v-if="asciiResult">{{ asciiResult }}</pre>
         </div>
         <div class="result-title-container">
-            <h3 class="result-title-vertical">效果展示区</h3>
-          </div>
+          <h3 class="result-title-vertical">效果展示区</h3>
+        </div>
       </div>
     </main>
     <!-- 页脚 -->
     <footer class="footer">
       <div class="footer-content">
-        <p class="copyright">&copy; 2024 图片转换工具. 保留所有权利.</p>
+        <p class="copyright">&copy; 2025 图片转换工具. 保留所有权利.</p>
         <div class="footer-links">
           <a href="#">关于我们</a>
           <a href="#">联系我们</a>
@@ -74,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
 
@@ -83,10 +95,12 @@ const activeTab = ref('1');
 const selectedFile = ref(null);
 const asciiResult = ref('');
 const previewUrl = ref('');
-const width = ref(0);  // 默认宽度为空
-const height = ref(0); // 默认高度为空
-const scale = ref(1);   // 默认比例值为 1
+const scale = ref(2.5);   // 默认比例值为 1
 const useStyle1 = ref(true); // 默认使用样式1
+const selectedCharType = ref('type1'); // 默认选择字符类型1
+const charInput = ref('█▓▒░ '); // 默认输入框内容
+const scaleMin = ref(0); // 最小值
+const scaleMax = ref(5); // 最大值
 
 const handleSelect = (key) => {
   activeTab.value = key;
@@ -103,6 +117,11 @@ const beforeUpload = (file) => {
 };
 
 const convertImage = async () => {
+  // 检查自定义类型且输入为空的情况
+  if (selectedCharType.value === 'custom' && !charInput.value.trim()) {
+    ElMessage.warning('你干嘛！？啊~哈~哎哟~');
+    return;
+  }
   if (!selectedFile.value) {
     ElMessage.warning('请先上传图片');
     return;
@@ -110,9 +129,9 @@ const convertImage = async () => {
   const formData = new FormData();
   // 初始化 imageParam 对象
   const imageParam = {
-    width: width.value,
-    height: height.value,
-    scale: scale.value
+    scale: scale.value,
+    charType: selectedCharType.value,
+    charInput: charInput.value
   };
 
   // 将 imageParam 对象转换为 JSON 字符串
@@ -126,12 +145,23 @@ const convertImage = async () => {
       }
     });
     asciiResult.value = response.data;
-    ElMessage.success('转换成功');
+    ElMessage.success('哇！真的是你啊！');
   } catch (error) {
     console.error('转换失败:', error);
     ElMessage.error('转换失败，请稍后重试');
   }
 };
+
+// 监听选择框的值变化
+watch(selectedCharType, (newValue) => {
+  if (newValue === 'type1') {
+    charInput.value = '█▓▒░ ';
+  } else if (newValue === 'type2') {
+    charInput.value = '@%#*+=-. ';
+  } else if (newValue === 'custom') {
+    charInput.value = '';
+  }
+});
 </script>
 
 <style scoped>
@@ -318,5 +348,30 @@ body {
   margin: 100px 0; 
   padding: 10px 0;
   color: #646cff;  /* 颜色 */
+}
+
+/* 新增下拉选择框和输入框样式 */
+.select-section {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.comm-margin {
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-size: 12px;
+  color: #606266;
+}
+
+.scale-labels label {
+  font-weight: 500;
 }
 </style>
