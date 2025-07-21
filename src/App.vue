@@ -147,8 +147,20 @@ const convertImage = async () => {
     asciiResult.value = response.data;
     ElMessage.success('哇！真的是你啊！');
   } catch (error) {
-    console.error('转换失败:', error);
-    ElMessage.error('转换失败，请稍后重试');
+    if (error.response) {
+      const { status, data } = error.response;
+      if (status === 429) {
+        const retrySeconds = data.retryAfter ? Math.floor(data.retryAfter / 1000) : 0;
+        const errorMessage = data.message ? `请求过于频繁，[${retrySeconds}]秒后重试!` : '请求过于频繁，请稍后重试';
+        ElMessage.error(errorMessage);
+      } else {
+        console.error('转换失败:', error);
+        ElMessage.error('转换失败，请稍后重试');
+      }
+    } else {
+      console.error('转换失败:', error);
+      ElMessage.error('转换失败，请稍后重试');
+    }
   }
 };
 
